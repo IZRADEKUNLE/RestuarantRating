@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Food Rating</title>
+			<style type="text/css">
+				body{
+					background-color: #e198e6;
+				}
+			#header{
+				width: 100%;
+				height: 60px;
+				background-color: #333; 
+				box-shadow: 0px 4px 2px #333;
+
+			}
+
+			#header>h1{
+				padding: 12px;
+				width: 1024px;
+				margin: 0px auto;
+				color: white;
+				text-align: center
+
+			}
+			#container{
+				width: 1130px;
+				height: 500px;
+				margin: 0px auto;
+				margin-top: 20px;
+				background-color: white;
+				border: 1px solid #333;
+				overflow: scroll;
+				font-size: small;
+		    	text-align: center; 
+			}
+			#searching {
+			    text-align: center;
+			    margin: 20px;
+			}
+			#pages {
+			    text-align: center;
+			    margin: 20px;
+			}
+
+			.btnm{
+				color: #494949 !important;
+				text-transform: uppercase;
+				text-decoration: none;
+				background: #ffffff;
+			
+				display: inline-block;
+				transition: all 0.4s ease 0s;
+			}
+
+			.btnm:hover{
+				color: #ffffff !important;
+				background: #f6b93b;
+				border-color: #f6b93b !important;
+				transition: all 0.4s ease 0s;
+			}
+
+			.btn{
+				color: #494949 !important;
+				text-transform: uppercase;
+				text-decoration: none;
+				background: #ffffff;
+			
+				display: inline-block;
+				transition: all 0.4s ease 0s;
+			}
+
+			.btn:hover{
+				color: #ffffff !important;
+				background: #f6b93b;
+				border-color: #f6b93b !important;
+				transition: all 0.4s ease 0s;
+			}
+
+			table{
+				text-align: center;
+			}
+
+			.ui-autocomplete {
+				position: absolute;
+				top: 0;
+				left: 0;
+				cursor: default;
+				background-color: red;
+			}
+			</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+  		<script src="https://code.jquery.com/jquery-migrate-3.0.0.min.js"></script>
+  		<script src="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css"></script>
+		<script>
+			var rate = 1;
+			//function to retrieve the busineess name in each row, blueprint for TASK 2
+			function getRating(){
+				$(".btn").click(function(){
+  				var xl =$(this).parent().siblings().get(0).innerText;
+  				$.get("https://www.cs.kent.ac.uk/people/staff/yh/co539_a2_data/rating.php?businessName=" + xl, function(data){
+  					//goes through the data array and gete the rating for the bussiness
+					try{
+						alert("Average rating for this restaurant is " + data[0].avgRating + " and Total rating is " + data[0].totalRatings);
+					}
+					catch(et){
+						if(et instanceof TypeError){
+							alert("No ratings for this restaurant exist at the moment");
+						}
+					}
+				}, "json");
+				});
+				//alert(rate);
+			}
+
+			//method to append the data being displayed
+			function getPage(data){
+					var table = "";					
+					var x = "Get Rating";
+					$.each(data, function(key, value){
+						table += "<tr>";
+						table += "<td>" + value.business + "</td>";
+						table += "<td>" + value.address + "</td>";
+						table += "<td>" + value.type + "</td>";
+						table += "<td>" + value.rating + "</td>";
+						table += "<td>" + value.date + "</td>";
+						table += "<td>" + "<button class='btn' id='getRate" + rate + "' type='button' value=" + rate + ">" + x + "</button>" + "</td>";
+						table += "</tr>";
+						rate++;
+						address = value.address;
+					});
+						$("#table").empty();
+						$("#table").append(table);
+						//Tasks 2's function being called when the buttos are being created dynamically
+						getRating();
+				}
+
+				
+
+		
+			$(document).ready(function(){
+				//1.1
+				//fetchs the first 10 results 
+				$.get("https://www.cs.kent.ac.uk/people/staff/yh/co539_a2_data/hygiene.php/op=get&page=1", function(data){
+
+					//displays data to by appending table
+					getPage(data);
+				}, "json");
+				
+
+				//1.2	
+				//fetches the number of pages
+				$.get("https://www.cs.kent.ac.uk/people/staff/yh/co539_a2_data/hygiene.php?op=pages", function(data){
+					var counter = 1;
+					var btn = "";
+
+				//generates page buttons based on the number of pages
+					$.each(data, function(i, check){
+						for(counter; counter <= check; counter++){
+							$("#pages").append("<button class='btnm' id='pages" + counter + "' type='button' value=" + counter + ">" + counter + "</button>");
+
+							//changes the conetnt of the table based on the page number that is selected
+							$("#pages" + counter).click(function(){
+								$("table").find("tr:gt(0)").remove();
+								var num = $(this).text();
+								$.get("https://www.cs.kent.ac.uk/people/staff/yh/co539_a2_data/hygiene.php?op=get&page=" + num, function(data){
+									getPage(data);
+								}, "json")});
+						}
+					});
+					
+				}, "json");
+
+				//Part 3.1
+				//predifned resturant names stored in array
+				var predefined = ["Age UK", "Burger UK", "KFC", "Wine With Spirit"];
+				//when the button gets clicked
+				$("#customSearch").click(                                                                                                                                                    function(){
+					var search = $("#textVal").val();
+					$.get("https://www.cs.kent.ac.uk/people/staff/yh/co539_a2_data/hygiene.php?op=search&business=" + search, function(data){
+						getPage(data);
+					}, "json");
+
+					if(predefined.includes(search) === false){
+						predefined.push(search);
+					}
+
+				});
+
+				$("#textVal").autocomplete({
+					source: predefined,
+					minLength: 0,
+
+				}).bind("focus", function(){
+					$("this").autocomplete("search");
+				});
+
+
+			
+
+			});
+
+		</script>
+</head>
+<body>
+	<div id="header"><H1>This page displays the information of restaurants</H1></div>
+	<div id="container">
+		<table id="table">
+			<tr>
+			<th>Business</th>
+			<th>Address</th>
+			<th>Type</th>
+			<th>rating</th>
+			<th>Date</th>
+			<th>Rating</th>
+			</tr>
+			<?php
+		</table>
+	</div>	
+<div id="searching">
+	<label>Business Name</label>
+	<input type="text" id="textVal" name="search" value placeholder="Search restaurant">
+	<button id="customSearch" >search</button>
+	<div id="pages"></div>
+</div>
+	</body>
+</html>
